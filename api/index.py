@@ -5,18 +5,15 @@ from supabase import create_client, Client
 
 app = FastAPI()
 
-# Collegamento al database
 url = os.environ.get("SUPABASE_URL")
 key = os.environ.get("SUPABASE_ANON_KEY")
 supabase: Client = create_client(url, key)
 
 @app.get("/")
 async def home():
-    # Prende l'ultima bio salvata su Supabase
     res = supabase.table('profiles').select("bio").order('created_at', desc=True).limit(1).execute()
     bio_text = res.data[0]['bio'] if res.data else "Manifesto in fase di caricamento..."
     
-    # Genera la pagina stile New York Times direttamente da qui
     return HTMLResponse(content=f"""
     <!DOCTYPE html>
     <html lang="it">
