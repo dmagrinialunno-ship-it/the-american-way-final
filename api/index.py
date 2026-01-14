@@ -10,5 +10,8 @@ supabase: Client = create_client(url, key)
 
 @app.get("/api/bio")
 async def get_bio():
-    res = supabase.table('profiles').select("bio").execute()
-    return res.data[0] if res.data else {"bio": "Errore: Bio non trovata"}
+    # Prova a prendere la prima riga disponibile in assoluto
+    res = supabase.table('profiles').select("bio").limit(1).execute()
+    if res.data and len(res.data) > 0:
+        return {"bio": res.data[0]['bio']}
+    return {"bio": "Il manifesto è in fase di pubblicazione. Controlla il database Supabase."}
