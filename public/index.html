@@ -2,26 +2,44 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>The American Way | Manifesto</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The American Way</title>
     <style>
-        body { font-family: 'Georgia', serif; line-height: 1.6; color: #1a1a1a; max-width: 800px; margin: 40px auto; padding: 20px; background: #fffcf5; }
-        header { border-bottom: 2px solid #1a1a1a; margin-bottom: 50px; text-align: center; }
-        h1 { font-size: 3.5rem; text-transform: uppercase; letter-spacing: -1px; margin-bottom: 0; }
-        .motto { font-style: italic; color: #666; margin-top: 5px; border-top: 1px solid #eee; display: inline-block; padding-top: 5px; }
-        .content { font-size: 1.3rem; margin-top: 30px; text-align: justify; }
-        .bio-footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid #1a1a1a; font-size: 0.9rem; }
+        body { 
+            background: #000; 
+            color: #fff; 
+            font-family: 'Georgia', serif; 
+            padding: 50px; 
+            line-height: 1.6; 
+            display: flex;
+            justify-content: center;
+        }
+        .container { max-width: 800px; }
+        h1 { 
+            border-bottom: 2px solid #333; 
+            padding-bottom: 20px; 
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        #bio { font-size: 1.2rem; white-space: pre-wrap; margin-top: 30px; }
     </style>
 </head>
 <body>
-    <header>
+    <div class="container">
         <h1>The American Way</h1>
-        <div class="motto">Pensiero strategico, critico e diretto.</div>
-    </header>
-    <div class="content" id="manifesto">
-        <p>Caricamento del Manifesto dal database...</p>
+        <div id="bio">Caricamento del manifesto in corso...</div>
     </div>
-    <div class="bio-footer">
-        <strong>Daniele Magrini Alunno</strong> — Intellectual Property Manager e appassionato di politica e cultura.
-    </div>
+    <script>
+        // Questo script "telefona" al database Supabase tramite il tuo file api/index.py
+        fetch('/api/bio')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('bio').innerText = data.bio;
+            })
+            .catch(err => {
+                document.getElementById('bio').innerText = "Errore nel caricamento. Controlla la connessione al database.";
+                console.error("Errore:", err);
+            });
+    </script>
 </body>
 </html>
