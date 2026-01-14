@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"><title>The American Way</title>
+    <style>body{background:#000;color:#fff;font-family:Georgia,serif;padding:60px;line-height:1.8;display:flex;justify-content:center;}.container{max-width:750px;}h1{font-size:3rem;border-bottom:3px solid #fff;text-transform:uppercase;}</style>
+</head>
+<body>
+    <div class="container"><h1>The American Way</h1><div id="bio">Caricamento del manifesto...</div></div>
+    <script>
+        // Questo script chiama il tuo motore Python in api/index.py
+        fetch('/api/bio').then(r => r.json()).then(d => { document.getElementById('bio').innerText = d.bio; });
+    </script>
+</body>
+</html>
