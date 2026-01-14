@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin - The American Way</title>
+    <style>body{background:#111;color:#fff;font-family:sans-serif;padding:40px;}</style>
+</head>
+<body>
+    <h1>Area Admin Privata</h1>
+    <textarea id="bioInput" style="width:100%;height:200px;background:#222;color:#fff;"></textarea><br>
+    <button onclick="saveBio()">SALVA BIO E MANIFESTO</button>
+    <script>
+        function saveBio() {
+            const text = document.getElementById('bioInput').value;
+            fetch('/api/admin/update-bio', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({text: text})
+            }).then(() => alert('Salvato!'));
+        }
+    </script>
+</body>
+</html>
