@@ -5,15 +5,19 @@ from supabase import create_client, Client
 
 app = FastAPI()
 
+# Connessione a Supabase
 url = os.environ.get("SUPABASE_URL")
 key = os.environ.get("SUPABASE_ANON_KEY")
 supabase: Client = create_client(url, key)
 
-@app.get("/")
-async def home():
+# Questa è la rotta "Maestra": cattura qualsiasi chiamata (anche se Vercel sbaglia il percorso)
+@app.api_route("/{path_name:path}", methods=["GET"])
+async def catch_all(path_name: str):
+    # Prende l'ultima bio da Supabase
     res = supabase.table('profiles').select("bio").order('created_at', desc=True).limit(1).execute()
-    bio_text = res.data[0]['bio'] if res.data else "Manifesto in fase di caricamento..."
+    bio_text = res.data[0]['bio'] if res.data else "Il manifesto è in fase di caricamento..."
     
+    # Restituisce l'HTML stile New York Times
     return HTMLResponse(content=f"""
     <!DOCTYPE html>
     <html lang="it">
