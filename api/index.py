@@ -11,14 +11,14 @@ supabase: Client = create_client(url, key)
 
 @app.get("/")
 async def home():
-    # Prende l'ultima riga salvata su Supabase (quella con il tuo manifesto)
+    # Prende il manifesto da Supabase (quello che hai salvato prima)
     res = supabase.table('profiles').select("bio").order('created_at', desc=True).limit(1).execute()
     bio_text = res.data[0]['bio'] if res.data else "Il manifesto è in fase di caricamento..."
     
-    # Restituisce direttamente l'HTML stile New York Times
+    # Restituisce l'HTML con lo stile New York Times che volevi
     return HTMLResponse(content=f"""
     <!DOCTYPE html>
-    <html>
+    <html lang="it">
     <head>
         <meta charset="UTF-8"><title>The American Way</title>
         <style>
