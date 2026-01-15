@@ -5,181 +5,193 @@ from supabase import create_client, Client
 
 app = FastAPI()
 
+# Configurazione Supabase
 url = os.environ.get("SUPABASE_URL")
 key = os.environ.get("SUPABASE_ANON_KEY")
 supabase: Client = create_client(url, key)
 
 @app.get("/")
 async def home():
-    res = supabase.table('profiles').select("bio").order('created_at', desc=True).limit(1).execute()
-    bio_text = res.data[0]['bio'] if res.data else "Analisi in corso..."
-    
+    # Recupero Bio/Manifesto
+    try:
+        res = supabase.table('profiles').select("bio").order('created_at', desc=True).limit(1).execute()
+        bio_text = res.data[0]['bio'] if res.data else "Il manifesto è in fase di caricamento..."
+    except:
+        bio_text = "Connessione al database in corso..."
+
     return HTMLResponse(content=f"""
     <!DOCTYPE html>
     <html lang="it">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>The American Way | Politica e Strategia</title>
-        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,900;1,900&family=Oswald:wght@700&family=Georgia&display=swap" rel="stylesheet">
+        <title>The American Way | Strategia e Potere</title>
+        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,900;1,900&family=Oswald:wght@700&family=Georgia&family=Roboto+Condensed:wght@700&display=swap" rel="stylesheet">
         <style>
             :root {{
-                --brand-red: #e60000;
-                --text-gray: #cccccc;
-                --border-color: #333333;
+                --blood-red: #cc0000;
+                --paper-white: #f4f4f4;
+                --dark-bg: #0a0a0a;
             }}
 
             body {{
-                background-color: #050505;
-                color: #ffffff;
+                background-color: var(--dark-bg);
+                color: var(--paper-white);
                 margin: 0;
                 font-family: 'Georgia', serif;
-                line-height: 1.6;
+                overflow-x: hidden;
             }}
 
-            /* Sfondo con bandiere sbiadite in overlay */
-            .bg-overlay {{
+            /* Sfondo con bandiere sbiadite (Overlay) */
+            .background-flags {{
                 position: fixed;
                 top: 0; left: 0; width: 100%; height: 100%;
                 background: 
-                    linear-gradient(rgba(0,0,0,0.92), rgba(0,0,0,0.92)),
+                    linear-gradient(rgba(10,10,10,0.9), rgba(10,10,10,0.9)),
                     url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
-                z-index: -2;
+                z-index: -1;
+                display: flex;
+                justify-content: space-between;
+                opacity: 0.3; /* Effetto sbiadito */
             }}
 
             .container {{
                 max-width: 1200px;
                 margin: 0 auto;
-                background: rgba(0,0,0,0.7);
-                border-left: 1px solid var(--border-color);
-                border-right: 1px solid var(--border-color);
+                background: rgba(0,0,0,0.8);
+                border-left: 1px solid #222;
+                border-right: 1px solid #222;
                 min-height: 100vh;
+                box-shadow: 0 0 50px rgba(0,0,0,1);
             }}
 
-            /* Testata Stile New York Post */
+            /* Header Stile New York Post */
             header {{
-                padding: 30px 20px;
+                padding: 40px 20px;
                 text-align: center;
-                border-bottom: 5px solid var(--brand-red);
+                border-bottom: 6px double #333;
             }}
 
-            h1 {{
+            .masthead h1 {{
                 font-family: 'Playfair Display', serif;
-                font-size: clamp(3rem, 10vw, 6rem);
-                color: var(--brand-red);
+                font-size: clamp(3.5rem, 12vw, 7rem);
+                color: var(--blood-red);
                 text-transform: uppercase;
                 margin: 0;
-                letter-spacing: -3px;
-                -webkit-text-stroke: 1.5px #fff;
+                letter-spacing: -4px;
+                -webkit-text-stroke: 1.8px #fff; /* Contorno bianco */
                 font-style: italic;
-                line-height: 1;
+                line-height: 0.9;
+                filter: drop-shadow(5px 5px 0px rgba(0,0,0,1));
             }}
 
-            .tagline {{
+            .tagline-bar {{
+                border-top: 1px solid #444;
+                border-bottom: 1px solid #444;
+                margin-top: 20px;
+                padding: 8px 0;
                 font-family: 'Oswald', sans-serif;
                 text-transform: uppercase;
-                letter-spacing: 5px;
-                font-size: 1rem;
-                margin-top: 10px;
-                color: #fff;
+                letter-spacing: 6px;
+                font-size: 0.85rem;
+                color: #888;
             }}
 
-            /* Spazio Pubblicità Top */
-            .ad-leaderboard {{
+            /* Area Monetizzazione (Header) */
+            .ad-top {{
                 width: 100%;
+                max-width: 728px;
                 height: 90px;
+                margin: 20px auto;
                 background: #111;
-                margin: 20px 0;
+                border: 1px dashed #333;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                border: 1px dashed #444;
-                font-size: 0.8rem;
+                font-family: 'Oswald', sans-serif;
+                font-size: 0.7rem;
                 color: #444;
             }}
 
-            /* Layout a due colonne */
-            .main-content {{
+            /* Layout Griglia */
+            main {{
                 display: grid;
-                grid-template-columns: 1fr 300px;
-                gap: 30px;
-                padding: 20px 40px;
+                grid-template-columns: 1fr 320px;
+                gap: 40px;
+                padding: 40px;
             }}
 
-            .manifesto-section {{
+            .main-column {{
+                border-right: 1px solid #222;
                 padding-right: 20px;
             }}
 
-            .manifesto-title {{
-                font-family: 'Oswald', sans-serif;
-                font-size: 0.9rem;
-                background: var(--brand-red);
+            .section-label {{
+                font-family: 'Roboto Condensed', sans-serif;
+                background: var(--blood-red);
+                color: #fff;
                 padding: 4px 12px;
                 display: inline-block;
-                margin-bottom: 25px;
+                text-transform: uppercase;
+                margin-bottom: 30px;
+                font-size: 0.9rem;
             }}
 
-            .text-body {{
-                font-size: 1.35rem;
+            .article-content {{
+                font-size: 1.4rem;
+                line-height: 1.8;
+                color: #ddd;
                 text-align: justify;
-                color: var(--text-gray);
                 white-space: pre-wrap;
             }}
 
-            /* Sidebar per Monetizzazione e News */
-            .sidebar {{
-                border-left: 1px solid var(--border-color);
-                padding-left: 25px;
-            }}
-
-            .ad-sidebar {{
-                width: 100%;
-                height: 250px;
+            /* Sidebar Monetizzazione */
+            .sidebar-ad {{
+                width: 300px;
+                height: 600px; /* Skyscraper ad format */
                 background: #111;
-                margin-bottom: 30px;
+                border: 1px dashed #333;
+                margin-top: 20px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                border: 1px dashed #444;
-                color: #444;
-            }}
-
-            .sidebar-title {{
                 font-family: 'Oswald', sans-serif;
-                border-bottom: 2px solid var(--brand-red);
-                padding-bottom: 5px;
-                margin-bottom: 15px;
-                font-size: 1.1rem;
+                font-size: 0.7rem;
+                color: #444;
+                position: sticky;
+                top: 20px;
             }}
 
             @media (max-width: 900px) {{
-                .main-content {{ grid-template-columns: 1fr; }}
-                .sidebar {{ border-left: none; padding-left: 0; }}
+                main {{ grid-template-columns: 1fr; }}
+                .main-column {{ border-right: none; padding-right: 0; }}
+                .sidebar {{ display: none; }}
             }}
         </style>
     </head>
     <body>
-        <div class="bg-overlay"></div>
+        <div class="background-flags"></div>
         <div class="container">
             <header>
-                <h1>The American Way</h1>
-                <div class="tagline">Intelligence • Strategy • Freedom</div>
+                <div class="masthead">
+                    <h1>The American Way</h1>
+                </div>
+                <div class="tagline-bar">
+                    Intelligence • Strategy • Freedom — 2026
+                </div>
             </header>
 
-            <div class="ad-leaderboard">SPAZIO PUBBLICITARIO (LEADERBOARD 728x90)</div>
+            <div class="ad-top">SPAZIO PUBBLICITARIO DISPONIBILE (728x90)</div>
 
-            <main class="main-content">
-                <section class="manifesto-section">
-                    <div class="manifesto-title">IL MANIFESTO</div>
-                    <article class="text-body">{bio_text}</article>
-                </section>
+            <main>
+                <div class="main-column">
+                    <div class="section-label">Il Manifesto Strategico</div>
+                    <article class="article-content">{bio_text}</article>
+                </div>
 
                 <aside class="sidebar">
-                    <div class="sidebar-title">MONETIZATION AREA</div>
-                    <div class="ad-sidebar">ADV 300x250</div>
-                    
-                    <div class="sidebar-title">STRATEGIC INSIGHTS</div>
-                    <p style="font-size: 0.9rem; color: #666;">Prossimamente: Analisi sul futuro della difesa europea.</p>
+                    <div class="section-label" style="background: #333;">Monetizzazione</div>
+                    <div class="sidebar-ad">SPAZIO PUBBLICITARIO (300x600)</div>
                 </aside>
             </main>
         </div>
