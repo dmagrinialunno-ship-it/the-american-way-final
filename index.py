@@ -5,6 +5,7 @@ from supabase import create_client, Client
 
 app = FastAPI()
 
+# Inizializzazione del database (Supabase)
 url = os.environ.get("SUPABASE_URL")
 key = os.environ.get("SUPABASE_ANON_KEY")
 supabase: Client = create_client(url, key)
@@ -12,15 +13,18 @@ supabase: Client = create_client(url, key)
 @app.get("/")
 async def home():
     try:
+        # Prende l'ultimo testo che hai scritto nella tabella 'profiles'
         res = supabase.table('profiles').select("bio").order('created_at', desc=True).limit(1).execute()
-        bio_text = res.data[0]['bio'] if res.data else "Il manifesto è in fase di caricamento..."
-    except:
+        bio_text = res.data[0]['bio'] if res.data else "In attesa di sblocco dati (RLS)..."
+    except Exception as e:
         bio_text = "Connessione al database in corso..."
-    
-    # NOTA: La 'f' prima di """ è fondamentale per stampare il testo del database
+
+    # La 'f' prima delle virgolette serve a stampare il vero testo del database
     return HTMLResponse(content=f"""
-    <html>
+    <!DOCTYPE html>
+    <html lang="it">
     <head>
+        <meta charset="UTF-8">
         <title>The American Way</title>
         <style>
             body {{ background-color: #000; color: #fff; text-align: center; font-family: 'Georgia', serif; padding-top: 100px; }}
@@ -29,7 +33,7 @@ async def home():
         </style>
     </head>
     <body>
-        <h1>THE AMERICAN WAY</h1>
+        <h1>THE AMERICAN_WAY</h1>
         <div class="content">{bio_text}</div>
     </body>
     </html>
