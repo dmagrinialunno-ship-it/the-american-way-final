@@ -1,200 +1,89 @@
 import os
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Form
+from fastapi.responses import HTMLResponse, RedirectResponse
 from supabase import create_client, Client
 
 app = FastAPI()
 
-# Configurazione Supabase
+# Connessione Database
 url = os.environ.get("SUPABASE_URL")
 key = os.environ.get("SUPABASE_ANON_KEY")
 supabase: Client = create_client(url, key)
 
+# --- STILI CSS COMUNI (Stile NY Post / NY Times) ---
+COMMON_STYLE = """
+<style>
+    :root { --brand-red: #e60000; --bg-black: #0a0a0a; --text-light: #f4f4f4; }
+    body { background: var(--bg-black); color: var(--text-light); font-family: 'Georgia', serif; margin: 0; }
+    .container { max-width: 1200px; margin: 0 auto; border-left: 1px solid #222; border-right: 1px solid #222; min-height: 100vh; }
+    header { padding: 40px 20px; text-align: center; border-bottom: 5px solid var(--brand-red); background: rgba(0,0,0,0.9); }
+    h1 { font-family: 'Playfair Display', serif; font-size: 5.5rem; color: var(--brand-red); text-transform: uppercase; margin: 0; -webkit-text-stroke: 1.5px white; letter-spacing: -3px; font-style: italic; }
+    .nav-bar { background: #111; padding: 10px; text-align: center; border-bottom: 1px solid #333; font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; }
+    .nav-bar a { color: #888; text-decoration: none; margin: 0 15px; }
+    .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; padding: 30px; }
+    .section-title { font-family: 'Oswald', sans-serif; background: var(--brand-red); color: white; padding: 5px 15px; display: inline-block; margin-bottom: 20px; }
+    .ad-placeholder { background: #111; border: 1px dashed #444; color: #444; text-align: center; padding: 20px; margin: 20px 0; font-size: 0.7rem; }
+    input, textarea { width: 100%; padding: 15px; background: #111; border: 1px solid #333; color: white; margin-bottom: 20px; font-family: 'Georgia', serif; }
+    .btn { background: var(--brand-red); color: white; padding: 10px 30px; border: none; cursor: pointer; text-transform: uppercase; font-weight: bold; }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,900;1,900&family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+"""
+
+# --- ROTTA 1: HOME PAGE ---
 @app.get("/")
 async def home():
-    # Recupero Bio/Manifesto
-    try:
-        res = supabase.table('profiles').select("bio").order('created_at', desc=True).limit(1).execute()
-        bio_text = res.data[0]['bio'] if res.data else "Il manifesto è in fase di caricamento..."
-    except:
-        bio_text = "Connessione al database in corso..."
-
+    res = supabase.table('profiles').select("bio").order('created_at', desc=True).limit(1).execute()
+    bio = res.data[0]['bio'] if res.data else "In attesa del manifesto..."
+    
     return HTMLResponse(content=f"""
-    <!DOCTYPE html>
-    <html lang="it">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>The American Way | Strategia e Potere</title>
-        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,900;1,900&family=Oswald:wght@700&family=Georgia&family=Roboto+Condensed:wght@700&display=swap" rel="stylesheet">
-        <style>
-            :root {{
-                --blood-red: #cc0000;
-                --paper-white: #f4f4f4;
-                --dark-bg: #0a0a0a;
-            }}
-
-            body {{
-                background-color: var(--dark-bg);
-                color: var(--paper-white);
-                margin: 0;
-                font-family: 'Georgia', serif;
-                overflow-x: hidden;
-            }}
-
-            /* Sfondo con bandiere sbiadite (Overlay) */
-            .background-flags {{
-                position: fixed;
-                top: 0; left: 0; width: 100%; height: 100%;
-                background: 
-                    linear-gradient(rgba(10,10,10,0.9), rgba(10,10,10,0.9)),
-                    url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
-                z-index: -1;
-                display: flex;
-                justify-content: space-between;
-                opacity: 0.3; /* Effetto sbiadito */
-            }}
-
-            .container {{
-                max-width: 1200px;
-                margin: 0 auto;
-                background: rgba(0,0,0,0.8);
-                border-left: 1px solid #222;
-                border-right: 1px solid #222;
-                min-height: 100vh;
-                box-shadow: 0 0 50px rgba(0,0,0,1);
-            }}
-
-            /* Header Stile New York Post */
-            header {{
-                padding: 40px 20px;
-                text-align: center;
-                border-bottom: 6px double #333;
-            }}
-
-            .masthead h1 {{
-                font-family: 'Playfair Display', serif;
-                font-size: clamp(3.5rem, 12vw, 7rem);
-                color: var(--blood-red);
-                text-transform: uppercase;
-                margin: 0;
-                letter-spacing: -4px;
-                -webkit-text-stroke: 1.8px #fff; /* Contorno bianco */
-                font-style: italic;
-                line-height: 0.9;
-                filter: drop-shadow(5px 5px 0px rgba(0,0,0,1));
-            }}
-
-            .tagline-bar {{
-                border-top: 1px solid #444;
-                border-bottom: 1px solid #444;
-                margin-top: 20px;
-                padding: 8px 0;
-                font-family: 'Oswald', sans-serif;
-                text-transform: uppercase;
-                letter-spacing: 6px;
-                font-size: 0.85rem;
-                color: #888;
-            }}
-
-            /* Area Monetizzazione (Header) */
-            .ad-top {{
-                width: 100%;
-                max-width: 728px;
-                height: 90px;
-                margin: 20px auto;
-                background: #111;
-                border: 1px dashed #333;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-family: 'Oswald', sans-serif;
-                font-size: 0.7rem;
-                color: #444;
-            }}
-
-            /* Layout Griglia */
-            main {{
-                display: grid;
-                grid-template-columns: 1fr 320px;
-                gap: 40px;
-                padding: 40px;
-            }}
-
-            .main-column {{
-                border-right: 1px solid #222;
-                padding-right: 20px;
-            }}
-
-            .section-label {{
-                font-family: 'Roboto Condensed', sans-serif;
-                background: var(--blood-red);
-                color: #fff;
-                padding: 4px 12px;
-                display: inline-block;
-                text-transform: uppercase;
-                margin-bottom: 30px;
-                font-size: 0.9rem;
-            }}
-
-            .article-content {{
-                font-size: 1.4rem;
-                line-height: 1.8;
-                color: #ddd;
-                text-align: justify;
-                white-space: pre-wrap;
-            }}
-
-            /* Sidebar Monetizzazione */
-            .sidebar-ad {{
-                width: 300px;
-                height: 600px; /* Skyscraper ad format */
-                background: #111;
-                border: 1px dashed #333;
-                margin-top: 20px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-family: 'Oswald', sans-serif;
-                font-size: 0.7rem;
-                color: #444;
-                position: sticky;
-                top: 20px;
-            }}
-
-            @media (max-width: 900px) {{
-                main {{ grid-template-columns: 1fr; }}
-                .main-column {{ border-right: none; padding-right: 0; }}
-                .sidebar {{ display: none; }}
-            }}
-        </style>
-    </head>
+    <html>
+    <head><title>The American Way</title>{COMMON_STYLE}</head>
     <body>
-        <div class="background-flags"></div>
         <div class="container">
-            <header>
-                <div class="masthead">
-                    <h1>The American Way</h1>
-                </div>
-                <div class="tagline-bar">
-                    Intelligence • Strategy • Freedom — 2026
-                </div>
-            </header>
-
-            <div class="ad-top">SPAZIO PUBBLICITARIO DISPONIBILE (728x90)</div>
-
-            <main>
-                <div class="main-column">
-                    <div class="section-label">Il Manifesto Strategico</div>
-                    <article class="article-content">{bio_text}</article>
-                </div>
-
-                <aside class="sidebar">
-                    <div class="section-label" style="background: #333;">Monetizzazione</div>
-                    <div class="sidebar-ad">SPAZIO PUBBLICITARIO (300x600)</div>
+            <div class="nav-bar">
+                <a href="/">Home</a> | <a href="/admin">Admin Access</a> | 2026 Strategy
+            </div>
+            <header><h1>The American Way</h1></header>
+            <div class="ad-placeholder">ADV LEADERBOARD 728x90</div>
+            <main class="grid">
+                <section>
+                    <div class="section-title">Il Manifesto</div>
+                    <div style="font-size: 1.4rem; line-height: 1.8; text-align: justify;">{bio}</div>
+                </section>
+                <aside>
+                    <div class="section-title">Latest Intelligence</div>
+                    <div class="ad-placeholder" style="height: 300px;">ADV BOX 300x250</div>
+                    <p style="color: #666; font-style: italic;">Analisi sulla burocrazia europea in arrivo...</p>
                 </aside>
             </main>
         </div>
     </body>
     </html>
     """)
+
+# --- ROTTA 2: AREA ADMIN (La tua plancia di comando) ---
+@app.get("/admin")
+async def admin_page():
+    return HTMLResponse(content=f"""
+    <html>
+    <head><title>Admin | The American Way</title>{COMMON_STYLE}</head>
+    <body>
+        <div class="container" style="max-width: 800px; padding: 40px;">
+            <div class="section-title">Dashboard Editoriale</div>
+            <h2>Aggiorna il Manifesto</h2>
+            <form action="/publish" method="post">
+                <textarea name="content" rows="15" placeholder="Scrivi qui il tuo nuovo manifesto o articolo..."></textarea>
+                <button type="submit" class="btn">Pubblica Istantaneamente</button>
+            </form>
+            <p><a href="/" style="color: #666;">Torna al sito</a></p>
+        </div>
+    </body>
+    </html>
+    """)
+
+# --- ROTTA 3: LOGICA DI PUBBLICAZIONE ---
+@app.post("/publish")
+async def publish(content: str = Form(...)):
+    # Inserisce il nuovo testo nel database
+    supabase.table('profiles').insert({"bio": content}).execute()
+    return RedirectResponse(url="/", status_code=303)
